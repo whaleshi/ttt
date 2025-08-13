@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import Info from "./Info";
+import List from "./List";
 
 const User = () => {
 	return (
 		<div className="w-full max-w-[450px] bg-[#100c15]">
 			<Info />
+			<List />
 		</div>
 	);
 };

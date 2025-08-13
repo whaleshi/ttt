@@ -22,7 +22,9 @@ type AppPropsWithLayout = AppProps & {
 
 const App = ({ Component, pageProps }: AppPropsWithLayout) => {
   useEffect(() => {
-
+    import('./create')
+    import('./meme/[address]')
+    import('./create')
   }, [])
   const getLayout = Component.getLayout ?? ((page) => page);
   return (

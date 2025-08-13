@@ -90,7 +90,6 @@ export function formatBigNumber(value: string | number | BigNumber | bigint, opt
             precision = 18; // 极小数用高精度处理
         }
     }
-    console.log(precision);
 
     if (compact && bigValue.gte(1000)) {
         const trillion = new BigNumber(1e12);

@@ -1,19 +1,29 @@
 import React, { useState } from "react";
-import router from 'next/router';
+import router, { useRouter } from 'next/router';
 import MemeTop from "./Top";
 import Chart from "./Chart";
 import About from "./About";
+import After from "./After";
 
 const Meme = () => {
+	const router = useRouter();
+	const addr = (router.query.address || '') as string;
+	console.log(addr)
 	return (
 		<div className="w-full max-w-[450px]">
 			<div className="h-[48px] flex items-center justify-between px-[16px]">
 				<BackIcon className="cursor-pointer" onClick={() => router.push('/')} />
 				<ShareIcon className="cursor-pointer" />
 			</div>
-			<MemeTop />
-			<Chart />
-			<About />
+			{
+				addr == '0' ? <>
+					<After />
+				</> : <>
+					<MemeTop />
+					<Chart />
+					<About />
+				</>
+			}
 		</div>
 	);
 };

@@ -34,7 +34,7 @@ const HomeList = () => {
 			</div>
 			{
 				!loading && Array(10).fill(0).map((item, index) => (
-					<div className="h-[72px] flex items-center f5001 cursor-pointer bg-[#18141D] rounded-[8px] mt-[8px] px-[16px]" key={index} onClick={() => router.push('/meme/1')}>
+					<div className="h-[72px] flex items-center f5001 cursor-pointer bg-[#18141D] rounded-[8px] mt-[8px] px-[16px]" key={index} onClick={() => router.push(`/meme/${index}`)}>
 						<MyAvatar src="https://heroui.com/images/hero-card-complete.jpeg" className="w-[40px] h-[40px]" />
 						<div className="h-[40px] flex flex-col justify-center gap-[4px] ml-[8px]">
 							<div className="text-[15px] text-[#FFF]">launchcoin{index}</div>

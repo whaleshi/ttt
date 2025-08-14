@@ -1,59 +1,3 @@
-// import { Image } from 'react-vant';
-// import { useEffect, useState } from 'react';
-
-// interface AvatarImageProps {
-// 	src: string; // 头像图片的源地址
-// 	width?: number; // 头像的尺寸
-// 	height?: number; // 头像的尺寸
-// 	fit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down'; // 图片的填充模式，默认为 'cover'
-// 	round?: boolean; // 是否显示为圆形头像，默认为 true
-// 	// 可以添加更多 Image 组件支持的属性，并在这里声明它们的类型
-// 	// loadingIcon?: React.ReactNode; // 加载中的图标
-// 	// errorIcon?: React.ReactNode;   // 加载失败的图标
-// 	alt?: string; // 图片的替代文本
-// 	className?: string; // 自定义 CSS 类名
-// 	// style?: React.CSSProperties; // 自定义内联样式
-// }
-
-// const AvatarImage: React.FC<AvatarImageProps> = ({
-// 	src,
-// 	width = 100, // 提供默认值
-// 	height = 100, // 提供默认值
-// 	fit = 'cover', // 提供默认值
-// 	round = false, // 提供默认值
-// 	// loadingIcon,
-// 	// errorIcon,
-// 	alt,
-// 	className,
-// 	// style,
-// 	...rest // 捕获并传递所有其他未明确声明的属性给 Image 组件
-// }) => {
-// 	const [mounted, setMounted] = useState(false);
-
-// 	useEffect(() => {
-// 		setMounted(true);
-// 	}, []);
-
-// 	if (!mounted) return null;
-// 	return (
-// 		<Image
-// 			width={width}
-// 			height={height}
-// 			src={src}
-// 			fit={fit}
-// 			round={round}
-// 			loadingIcon={<LoadingIcon />}
-// 			errorIcon={<ErrorIcon />}
-// 			alt={alt || 'mmm'}
-// 			className={className}
-// 			// style={style}
-// 			{...rest} // 将剩余属性传递给 Image 组件
-// 		/>
-// 	);
-// };
-
-// export default AvatarImage;
-
 const LoadingIcon = () => (
 	<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
 		<rect width="80" height="80" fill="#1C1821" />
@@ -99,9 +43,33 @@ import React, { forwardRef, useMemo, useState, useCallback, useEffect, type Reac
 import type { AvatarProps as BaseAvatarProps } from "@heroui/react";
 import { AvatarIcon, useAvatar } from "@heroui/react";
 
-export interface AvatarProps extends BaseAvatarProps { }
+export interface AvatarProps extends BaseAvatarProps {
+	/**
+	 * 可选形状：
+	 * - circle: 完全圆形（默认）
+	 * - rounded: 圆角矩形
+	 * - square: 直角方形
+	 */
+	shape?: "circle" | "rounded" | "square";
+	/**
+	 * 自定义圆角（优先级高于 shape 映射），如 "12px" 或 12。
+	 */
+	borderRadius?: string | number;
+}
 
 const MyAvatar = forwardRef<HTMLSpanElement, AvatarProps>((props, ref) => {
+	const { shape, borderRadius, radius: radiusProp, ...rest } = props;
+	// 将自定义 shape 映射为 HeroUI 的 radius 取值
+	const mappedRadius: BaseAvatarProps["radius"] | undefined = (() => {
+		if (radiusProp) return radiusProp;
+		if (!shape) return undefined; // 使用库默认（通常是 full）
+		const map: Record<string, BaseAvatarProps["radius"]> = {
+			circle: "full",
+			rounded: "md",
+			square: "none",
+		} as const;
+		return map[shape];
+	})();
 	const {
 		src,
 		icon = <AvatarIcon />,
@@ -116,7 +84,8 @@ const MyAvatar = forwardRef<HTMLSpanElement, AvatarProps>((props, ref) => {
 		getImageProps,
 	} = useAvatar({
 		ref,
-		...props,
+		...(mappedRadius ? { radius: mappedRadius } : {}),
+		...rest,
 	});
 
 	const [isLoading, setIsLoading] = useState(!!src);
@@ -161,6 +130,9 @@ const MyAvatar = forwardRef<HTMLSpanElement, AvatarProps>((props, ref) => {
 				justifyContent: "center",
 				width: "100%",
 				height: "100%",
+				...(borderRadius !== undefined
+					? { borderRadius: typeof borderRadius === "number" ? `${borderRadius}px` : borderRadius }
+					: {}),
 			}}
 		>
 			{children}
@@ -223,13 +195,27 @@ const MyAvatar = forwardRef<HTMLSpanElement, AvatarProps>((props, ref) => {
 	]);
 
 	const imageProps = getImageProps();
+	const containerProps = getAvatarProps();
+	const mergedContainerStyle = {
+		...(containerProps as any).style,
+		...(borderRadius !== undefined
+			? { borderRadius: typeof borderRadius === "number" ? `${borderRadius}px` : borderRadius, overflow: "hidden" as const }
+			: { overflow: "hidden" as const }),
+	} as React.CSSProperties;
+	const mergedImgStyle = {
+		...(imageProps as any).style,
+		...(borderRadius !== undefined
+			? { borderRadius: typeof borderRadius === "number" ? `${borderRadius}px` : borderRadius }
+			: {}),
+	} as React.CSSProperties;
 
 	return (
-		<div {...getAvatarProps()}>
+		<div {...containerProps} style={mergedContainerStyle}>
 			{src && !isError && (
 				<img
 					{...imageProps}
 					alt={alt}
+					style={mergedImgStyle}
 					onLoad={(e) => { imageProps.onLoad?.(e); handleLoad(); }}
 					onError={(e) => { imageProps.onError?.(e); handleError(); }}
 				/>

@@ -1,13 +1,10 @@
 import React, { useState } from "react";
 import router, { useRouter } from 'next/router';
-import MemeTop from "./Top";
-import Chart from "./Chart";
-import About from "./About";
-import After from "./After";
-import Trade from "./Trade";
+import { Tab, Tabs } from "@heroui/react";
 
+import Game from "./Game";
 
-const Meme = () => {
+const Rush = () => {
 	const router = useRouter();
 	const addr = (router.query.address || '') as string;
 	console.log(addr)
@@ -15,20 +12,23 @@ const Meme = () => {
 
 	return (
 		<div className="w-full max-w-[450px]">
-			<div className="h-[48px] flex items-center justify-between px-[16px]">
-				<BackIcon className="cursor-pointer" onClick={() => router.push('/')} />
-				<ShareIcon className="cursor-pointer" />
+			<div className="h-[48px] flex items-center justify-between px-[16px] relative">
+				<BackIcon className="cursor-pointer relative z-10" onClick={() => router.push('/')} />
+				<ShareIcon className="cursor-pointer relative z-10" />
+				<div className="w-full h-full flex items-center justify-center absolute top-0 left-0 text-[16px] text-[#fff] gap-[2px]"><span className="f5001">Meme Rush</span></div>
 			</div>
-			{/* <After /> */}
-			<MemeTop />
-			<Chart />
-			<About />
-			<Trade />
+			<div className="w-full px-[16px] f500 pt-[8px]">
+				<Tabs aria-label="Tabs variants" variant='solid' fullWidth size="lg">
+					<Tab key="game" title="实时游戏" />
+					<Tab key="list" title="全部创意" />
+				</Tabs>
+				<Game />
+			</div>
 		</div>
 	);
 };
 
-export default Meme;
+export default Rush;
 
 const BackIcon = (props: any) => (
 	<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" {...props}>

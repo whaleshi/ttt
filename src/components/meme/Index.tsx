@@ -4,11 +4,15 @@ import MemeTop from "./Top";
 import Chart from "./Chart";
 import About from "./About";
 import After from "./After";
+import Trade from "./Trade";
+
 
 const Meme = () => {
 	const router = useRouter();
 	const addr = (router.query.address || '') as string;
 	console.log(addr)
+
+
 	return (
 		<div className="w-full max-w-[450px]">
 			<div className="h-[48px] flex items-center justify-between px-[16px]">
@@ -22,6 +26,7 @@ const Meme = () => {
 					<MemeTop />
 					<Chart />
 					<About />
+					<Trade />
 				</>
 			}
 		</div>

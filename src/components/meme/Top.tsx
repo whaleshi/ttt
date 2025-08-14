@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Divider, Progress } from "@heroui/react";
 import { formatBigNumber } from "@/utils/formatBigNumber";
 import MyAvatar from '@/components/common/AvatarImage';
@@ -6,13 +6,32 @@ import Silk from '@/components/other/Silk'
 
 
 const MemeTop = () => {
-	const [width, setWidth] = useState("0%");
+	// 数字百分比 0-100
+	const [width, setWidth] = useState(0);
+	const timerRef = useRef<number | null>(null);
+	const widthRef = useRef(0);
+
+	// 同步 ref
+	useEffect(() => { widthRef.current = width; }, [width]);
 
 	useEffect(() => {
-		const timer = setTimeout(() => {
-			setWidth("81.2%");
-		}, 100);
-		return () => clearTimeout(timer);
+		const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+		const nextDelay = () => rand(3000, 5000); // 3-5s 随机
+		const tick = () => {
+			const step = rand(5, 12); // 5%-12%
+			const next = Math.min(100, widthRef.current + step);
+			setWidth(next);
+			widthRef.current = next;
+			if (next < 100) {
+				timerRef.current = window.setTimeout(tick, nextDelay());
+			} else {
+				// 达到 100% 后停止，不再循环
+				timerRef.current = null;
+			}
+		};
+		// 初始等待后开始
+		timerRef.current = window.setTimeout(tick, nextDelay());
+		return () => { if (timerRef.current) window.clearTimeout(timerRef.current); };
 	}, []);
 	return (
 		<div className="flex flex-col items-center mt-[8px] px-[16px]">
@@ -29,91 +48,24 @@ const MemeTop = () => {
 				14.39%
 				<span className="text-[#67646B] f500">过去1天</span>
 			</div>
-			{/* <div className="w-full h-[58px] border-[rgba(255,255,255,0.10)] border-y border-dashed mt-[24px] flex"
-				style={{ background: "linear-gradient(90deg, rgba(28, 24, 33, 0.00) 0%, #1C1821 20%, #1C1821 80%, rgba(28, 24, 33, 0.00) 100%)" }}
-			>
-				<div
-					className=" h-full w-[70%] rounded" //border-r border-[#17C964]
-					style={{
-						background: "linear-gradient(90deg, rgba(23, 201, 100, 0.1) 0%, rgba(23, 201, 100, 0.4) 40%, rgba(23, 201, 100, 0.6) 50%, rgba(23, 201, 100, 0.4) 60%, rgba(23, 201, 100, 0.1) 100%)",
-						backgroundSize: "200% 100%",
-						animation: "energyFlow 5s linear infinite",
-					}}
-				></div>
-			</div> */}
 			<div className="w-full h-[58px] border-[rgba(255,255,255,0.10)] border-y border-dashed mt-[24px] flex relative mb-[32px]"
 				style={{ background: "linear-gradient(90deg, rgba(28, 24, 33, 0.00) 0%, #1C1821 20%, #1C1821 80%, rgba(28, 24, 33, 0.00) 100%)" }}
 			>
 				<div
-					className="border-r border-[#17C964] h-full animate-energy transition-all duration-[2000ms] ease-in-out"
+					className={["border-r border-[#17C964] h-full transition-all duration-[800ms] ease-in-out", width < 100 ? "animate-energy" : ""].join(" ")}
 					style={{
-						width,
+						width: `${width}%`,
 						background:
 							"linear-gradient(90deg, rgba(23, 201, 100, 0) 0%, rgba(23, 201, 100, 0.3) 100%)",
 					}}
 				></div>
 				<div className="absolute w-full h-full left-0 top-0 px-[12px] text-[12px] text-[rgba(255,255,255,0.35)] flex justify-between">
 					<div className="flex flex-col justify-center h-full">
-						市值进度<span className="text-[20px] f6001 text-[#fff]">{width}</span>
+						市值进度<span className="text-[20px] f6001 text-[#fff]">{width}%</span>
 					</div>
 					<div className="text-[14px] f5001 flex items-end pb-[4px]"><span className="f6001 text-[#fff]">$62.5k</span> / $100k</div>
 				</div>
 			</div>
-			<div className="w-full h-[58px] border-[rgba(255,255,255,0.10)] border-y border-dashed mt-[24px] flex relative mb-[32px]"
-				style={{ background: "linear-gradient(90deg, rgba(28, 24, 33, 0.00) 0%, #1C1821 20%, #1C1821 80%, rgba(28, 24, 33, 0.00) 100%)" }}
-			>
-				<div
-					className="border-r border-[#17C964] h-full transition-all duration-[2000ms] ease-in-out"
-					style={{
-						width,
-						background:
-							"linear-gradient(90deg, rgba(23, 201, 100, 0) 0%, rgba(23, 201, 100, 0.3) 100%)",
-					}}
-				>
-					<Silk
-						speed={1}
-						scale={0.4}
-						color="#17C9642D"
-						noiseIntensity={0}
-						rotation={5.49}
-					/>
-				</div>
-				<div className="absolute w-full h-full left-0 top-0 px-[12px] text-[12px] text-[rgba(255,255,255,0.35)] flex justify-between">
-					<div className="flex flex-col justify-center h-full">
-						市值进度<span className="text-[20px] f6001 text-[#fff]">{width}</span>
-					</div>
-					<div className="text-[14px] f5001 flex items-end pb-[4px]"><span className="f6001 text-[#fff]">$62.5k</span> / $100k</div>
-				</div>
-			</div>
-
-			{/* <div className="text-[12px] mt-[12px] text-[#8F8F8F] text-center">origin.fun is the easiest way to discover, buy and sell meme directly with Pay 🔥origin.fun is the easiest </div>
-			<div className="h-[36px] w-full rounded-[12px] overflow-hidden flex gap-[1px] mt-[20px] text-[12px] f6001 text-[#fff]">
-				<div className="flex-1 h-[36px] bg-[#1C1821] flex items-center justify-center gap-[4px] cursor-pointer">
-					<XIcon />Twitter
-				</div>
-				<div className="flex-1 h-[36px] bg-[#1C1821] flex items-center justify-center gap-[4px] cursor-pointer">
-					<TgIcon />Telegram
-				</div>
-				<div className="flex-1 h-[36px] bg-[#1C1821] flex items-center justify-center gap-[4px] cursor-pointer">
-					<WebIcon />Website
-				</div>
-			</div>
-			<div className="h-[60px] w-full rounded-[12px] bg-[#18141D] overflow-hidden flex items-center text-[14px] f6001 text-[#fff] mt-[8px] relative z-1">
-				<div className="flex-1 flex flex-col items-center">
-					${formatBigNumber('0.0000134')}
-					<span className="text-[#67646B] text-[12px] f500">Price</span>
-				</div>
-				<Divider orientation="vertical" className="bg-[#242028] h-[37px]" />
-				<div className="flex-1 flex flex-col items-center">
-					$0.0000134
-					<span className="text-[#67646B] text-[12px] f500">MC</span>
-				</div>
-				<Divider orientation="vertical" className="bg-[#242028] h-[37px]" />
-				<div className="flex-1 flex flex-col items-center">
-					$11.11m
-					<span className="text-[#67646B] text-[12px] f500">24h VOL</span>
-				</div>
-			</div> */}
 
 			<style jsx>{`
 				@keyframes energyFlow {

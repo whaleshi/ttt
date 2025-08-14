@@ -8,7 +8,6 @@ const After = () => {
 				alt="HeroUI Album Cover"
 				className="w-[100px] h-[100px] rounded-[24px]"
 				src="https://heroui.com/images/fruit-1.jpeg"
-				width={240}
 			/>
 		</div>
 	</div>

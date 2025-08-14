@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Form, Input, Button, Textarea, NumberInput } from "@heroui/react";
+import { Form, Input, Button, Textarea, NumberInput, useDisclosure, Image, Snippet } from "@heroui/react";
 import MyAvatar from "@/components/common/AvatarImage";
+import ResponsiveDialog from "../common/ResponsiveDialog";
 
 type Beneficiary = {
 	id: string;
@@ -139,8 +140,10 @@ function AvatarField({
 
 
 export default function CreateForm() {
+	const { isOpen, onOpen, onOpenChange } = useDisclosure();
 	const [submitted, setSubmitted] = useState<any>(null);
 	const [ticker, setTicker] = useState("");
+	const [nameVal, setNameVal] = useState("");
 
 	// 头像
 	const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -189,6 +192,10 @@ export default function CreateForm() {
 		() => beneficiaries.reduce((s, b) => s + (Number(b.percent) || 0), 0),
 		[beneficiaries]
 	);
+
+	// 满足必填：头像、Name、Ticker 均存在
+	const requiredValid = !!avatarUrl && nameVal.trim().length > 0 && ticker.trim().length > 0;
+	const readyToSubmit = requiredValid && totalPercent === 100;
 
 	// 小数处理，避免 0.1 / 2 = 0.050000000000000003 这类精度问题
 	const round = (n: number, dp = 4) => Math.round(n * 10 ** dp) / 10 ** dp;
@@ -263,264 +270,314 @@ export default function CreateForm() {
 		};
 
 		setSubmitted(payload);
+		onOpen()
 		// 真提交：await fetch("/api/create", { method: "POST", body: fd });
 	};
 
 
 	return (
-		<Form className="w-full px-[16px] pt-[8px] gap-[24px]" onSubmit={onSubmit}>
-			{/* 头像（必填，统一提示样式） */}
-			<AvatarField
-				valueUrl={avatarUrl}
-				onPick={onPickAvatar}
-				onClear={onClearAvatar}
-				required
-			/>
+		<>
+			<Form className="w-full px-[16px] pt-[8px] gap-[24px]" onSubmit={onSubmit}>
+				{/* 头像（必填，统一提示样式） */}
+				<AvatarField
+					valueUrl={avatarUrl}
+					onPick={onPickAvatar}
+					onClear={onClearAvatar}
+					required
+				/>
 
-			{/* 基本信息 */}
-			<Input
-				classNames={{
-					inputWrapper: "h-[48px] border-[#49464D] bg-[#18141D]",
-					input: "f600 text-[15px] text-white placeholder:text-[#49464D]",
-				}}
-				isRequired
-				errorMessage="Please enter"
-				label="Name"
-				labelPlacement="outside-top"
-				name="name"
-				placeholder="Name"
-				variant="bordered"
-			/>
+				{/* 基本信息 */}
+				<Input
+					classNames={{
+						inputWrapper: "h-[48px] border-[#49464D] bg-[#18141D]",
+						input: "f600 text-[15px] text-white placeholder:text-[#49464D]",
+					}}
+					isRequired
+					errorMessage="Please enter"
+					label="Name"
+					labelPlacement="outside-top"
+					name="name"
+					placeholder="Name"
+					variant="bordered"
+					value={nameVal}
+					onChange={(e) => setNameVal(e.target.value)}
+				/>
 
-			{/* Ticker：强制大写 + 字距 */}
-			<Input
-				classNames={{
-					inputWrapper: "h-[48px] border-[#49464D] bg-[#18141D]",
-					input:
-						"f600 text-[15px] text-white placeholder:text-[#49464D] uppercase tracking-[-0.07px]",
-				}}
-				isRequired
-				errorMessage="Please enter"
-				label="Ticker"
-				labelPlacement="outside-top"
-				name="ticker"
-				placeholder="Ticker"
-				variant="bordered"
-				value={ticker}
-				onChange={(e) => setTicker(e.target.value.toUpperCase())}
-				aria-label="代币简称"
-			/>
+				{/* Ticker：强制大写 + 字距 */}
+				<Input
+					classNames={{
+						inputWrapper: "h-[48px] border-[#49464D] bg-[#18141D]",
+						input:
+							"f600 text-[15px] text-white placeholder:text-[#49464D] uppercase tracking-[-0.07px]",
+					}}
+					isRequired
+					errorMessage="Please enter"
+					label="Ticker"
+					labelPlacement="outside-top"
+					name="ticker"
+					placeholder="Ticker"
+					variant="bordered"
+					value={ticker}
+					onChange={(e) => setTicker(e.target.value.toUpperCase())}
+					aria-label="代币简称"
+				/>
 
-			<Textarea
-				classNames={{
-					inputWrapper: "border-[#49464D] bg-[#18141D]",
-					input: "f600 text-[15px] text-white placeholder:text-[#49464D]",
-					label: "pb-[8px]",
-				}}
-				label={
-					<div className="flex items-center gap-2">
-						<span>Description</span>
-						<span className="text-[#5A575E]">(可选)</span>
+				<Textarea
+					classNames={{
+						inputWrapper: "border-[#49464D] bg-[#18141D]",
+						input: "f600 text-[15px] text-white placeholder:text-[#49464D]",
+						label: "pb-[8px]",
+					}}
+					label={
+						<div className="flex items-center gap-2">
+							<span>Description</span>
+							<span className="text-[#5A575E]">(可选)</span>
+						</div>
+					}
+					labelPlacement="outside"
+					placeholder="Enter your description"
+					variant="bordered"
+					name="description"
+					aria-label="项目描述"
+				/>
+
+				{/* 受益人（新增均分；删除不归一；可手动编辑；仅总和≠100提示） */}
+				<div className="w-full">
+					{beneficiaries.map((b, idx) => (
+						<div key={b.id} className={idx > 0 ? "mt-[12px]" : ""}>
+							<Input
+								classNames={{
+									inputWrapper: [
+										"h-[48px] bg-[#18141D]",
+										"shadow-sm",
+										"bg-[#18141D]",
+										"dark:bg-[#18141D]",
+										"hover:bg-[#18141D]",
+										"dark:hover:bg-[#18141D]",
+										"group-data-[focus=true]:bg-[#18141D]",
+										"dark:group-data-[focus=true]:bg-[#18141D]",
+										"cursor-text!",
+									],
+									input: `f600 text-[15px] text-white placeholder:text-[#49464D]`,
+								}}
+								startContent={<div className="shrink-0"><XIcon /></div>}
+								endContent={
+									<div className="flex items-center h-full gap-[8px]">
+										<NumberInput
+											aria-label="百分比"
+											value={b.percent}
+											onValueChange={(val) =>
+												updateBeneficiary(b.id, {
+													percent: Math.max(0, Math.min(100, Number(val) || 0)),
+												})
+											}
+											minValue={0}
+											maxValue={100}
+											hideStepper
+											size="sm"
+											classNames={{
+												inputWrapper: [
+													"h-[32px] w-[80px] flex items-center justify-center",
+													"shadow-sm",
+													"bg-[#100C15]",
+													"dark:bg-[#100C15]",
+													"hover:bg-[#100C15]",
+													"dark:hover:bg-[#100C15]",
+													"group-data-[focus=true]:bg-[#100C15]",
+													"dark:group-data-[focus=true]:bg-[#100C15]",
+													"cursor-text!",
+												],
+												input: "h-full w-full text-center text-white text-[15px] leading-[32px] p-0 placeholder:text-[#49464D] rounded-[12px] overflow-hidden",
+												base: "data-[hover=true]:bg-[#100C15] data-[focus=true]:bg-[#100C15] shadow-none rounded-[12px] overflow-hidden"
+											}}
+											endContent='%'
+										/>
+										{idx > 0 ? (
+											<DeleteIcon className="shrink-0 cursor-pointer" onClick={() => removeBeneficiary(b.id)} />
+										) : null}
+									</div>
+
+								}
+								labelPlacement="outside-top"
+								placeholder={idx === 0 ? "我 (@0xbozwang)" : "@"}
+								value={b.label}
+								onChange={(e) =>
+									updateBeneficiary(b.id, { label: e.target.value })
+								}
+								variant="flat"
+								aria-label={`受益人 ${idx + 1}`}
+							/>
+						</div>
+					))}
+
+					<div className="flex justify-center mt-[12px]">
+						<Button
+							className="border-[#231F28] rounded-[40px] text-[#8D8B90]"
+							startContent={<AddIcon />}
+							variant="bordered"
+							onPress={addBeneficiary}
+							aria-label="添加受益人"
+						>
+							添加受益人
+						</Button>
 					</div>
-				}
-				labelPlacement="outside"
-				placeholder="Enter your description"
-				variant="bordered"
-				name="description"
-				aria-label="项目描述"
-			/>
 
-			{/* 受益人（新增均分；删除不归一；可手动编辑；仅总和≠100提示） */}
-			<div className="w-full">
-				{beneficiaries.map((b, idx) => (
-					<div key={b.id} className={idx > 0 ? "mt-[12px]" : ""}>
-						<Input
-							classNames={{
-								inputWrapper: [
-									"h-[48px] bg-[#18141D]",
-									"shadow-sm",
-									"bg-[#18141D]",
-									"dark:bg-[#18141D]",
-									"hover:bg-[#18141D]",
-									"dark:hover:bg-[#18141D]",
-									"group-data-[focus=true]:bg-[#18141D]",
-									"dark:group-data-[focus=true]:bg-[#18141D]",
-									"cursor-text!",
-								],
-								input: `f600 text-[15px] text-white placeholder:text-[#49464D]`,
-							}}
-							startContent={<div className="shrink-0"><XIcon /></div>}
-							endContent={
-								<div className="flex items-center h-full gap-[8px]">
-									<NumberInput
-										aria-label="百分比"
-										value={b.percent}
-										onValueChange={(val) =>
-											updateBeneficiary(b.id, {
-												percent: Math.max(0, Math.min(100, Number(val) || 0)),
-											})
-										}
-										minValue={0}
-										maxValue={100}
-										hideStepper
-										size="sm"
-										classNames={{
-											inputWrapper: [
-												"h-[32px] w-[80px] flex items-center justify-center",
-												"shadow-sm",
-												"bg-[#100C15]",
-												"dark:bg-[#100C15]",
-												"hover:bg-[#100C15]",
-												"dark:hover:bg-[#100C15]",
-												"group-data-[focus=true]:bg-[#100C15]",
-												"dark:group-data-[focus=true]:bg-[#100C15]",
-												"cursor-text!",
-											],
-											input: "h-full w-full text-center text-white text-[15px] leading-[32px] p-0 placeholder:text-[#49464D] rounded-[12px] overflow-hidden",
-											base: "data-[hover=true]:bg-[#100C15] data-[focus=true]:bg-[#100C15] shadow-none rounded-[12px] overflow-hidden"
-										}}
-										endContent='%'
-									/>
-									{idx > 0 ? (
-										<DeleteIcon className="shrink-0 cursor-pointer" onClick={() => removeBeneficiary(b.id)} />
-									) : null}
-								</div>
-
-							}
-							labelPlacement="outside-top"
-							placeholder={idx === 0 ? "我 (@0xbozwang)" : "@"}
-							value={b.label}
-							onChange={(e) =>
-								updateBeneficiary(b.id, { label: e.target.value })
-							}
-							variant="flat"
-							aria-label={`受益人 ${idx + 1}`}
-						/>
-					</div>
-				))}
-
-				<div className="flex justify-center mt-[12px]">
-					<Button
-						className="border-[#231F28] rounded-[40px] text-[#8D8B90]"
-						startContent={<AddIcon />}
-						variant="bordered"
-						onPress={addBeneficiary}
-						aria-label="添加受益人"
-					>
-						添加受益人
-					</Button>
+					{/* 仅当总和≠100 时提示 */}
+					{totalPercent !== 100 && (
+						<div className="mt-2 text-[12px] text-[#ffb020]" role="alert" aria-live="polite">
+							当前合计：{totalPercent}%（需为 100%）
+						</div>
+					)}
 				</div>
 
-				{/* 仅当总和≠100 时提示 */}
-				{totalPercent !== 100 && (
-					<div className="mt-2 text-[12px] text-[#ffb020]" role="alert" aria-live="polite">
-						当前合计：{totalPercent}%（需为 100%）
+
+				{/* 提前买入 */}
+				<Input
+					classNames={{
+						inputWrapper: "h-[48px] border-[#49464D] bg-[#18141D]",
+						input: "f600 text-[15px] text-white placeholder:text-[#49464D]",
+					}}
+					label={
+						<div className="flex items-center gap-2">
+							<span>提前买入</span>
+							<span className="text-[#5A575E]">(可选)</span>
+						</div>
+					}
+					endContent={
+						<div className="text-[15px] f6001 flex items-center gap-[4px]">
+							<MyAvatar
+								src="/images/common/bnb.png"
+								alt="BNB"
+								className="w-[24px] h-[24px]"
+							/>
+							BNB
+						</div>
+					}
+					inputMode="decimal"
+					pattern="[0-9]*[.,]?[0-9]*"
+					labelPlacement="outside-top"
+					name="amount"
+					placeholder="0.00"
+					variant="bordered"
+					aria-label="提前买入金额"
+				/>
+
+				{/* 社交链接 */}
+				<Input
+					classNames={{
+						inputWrapper: "h-[48px] border-[#49464D] bg-[#18141D]",
+						input: "f600 text-[15px] text-white placeholder:text-[#49464D]",
+					}}
+					label={
+						<div className="flex items-center gap-2">
+							<span>网站</span>
+							<span className="text-[#5A575E]">(可选)</span>
+						</div>
+					}
+					labelPlacement="outside-top"
+					name="website"
+					placeholder="输入网站链接"
+					variant="bordered"
+					type="url"
+					aria-label="网站链接"
+				/>
+				<Input
+					classNames={{
+						inputWrapper: "h-[48px] border-[#49464D] bg-[#18141D]",
+						input: "f600 text-[15px] text-white placeholder:text-[#49464D]",
+					}}
+					label={
+						<div className="flex items-center gap-2">
+							<span>X</span>
+							<span className="text-[#5A575E]">(可选)</span>
+						</div>
+					}
+					labelPlacement="outside-top"
+					name="x"
+					placeholder="输入 X 链接"
+					variant="bordered"
+					type="url"
+					aria-label="X 链接"
+				/>
+				<Input
+					classNames={{
+						inputWrapper: "h-[48px] border-[#49464D] bg-[#18141D]",
+						input: "f600 text-[15px] text-white placeholder:text-[#49464D]",
+					}}
+					label={
+						<div className="flex items-center gap-2">
+							<span>Telegram</span>
+							<span className="text-[#5A575E]">(可选)</span>
+						</div>
+					}
+					labelPlacement="outside-top"
+					name="telegram"
+					placeholder="输入 Telegram 链接"
+					variant="bordered"
+					type="url"
+					aria-label="Telegram 链接"
+				/>
+
+				<Button
+					className={[
+						"w-full h-[48px] text-[15px] mb-[50px]",
+						readyToSubmit ? "bg-[#FD7438] text-white" : "bg-[#231F28] text-[#8D8B90]",
+					].join(" ")}
+					type="submit"
+					aria-label="提交创建代币"
+				>
+					创建代币
+				</Button>
+
+				{submitted && (
+					<div className="text-small text-default-500 w-full break-words mb-[50px]">
+						You submitted: <code>{JSON.stringify(submitted)}</code>
 					</div>
 				)}
-			</div>
-
-
-			{/* 提前买入 */}
-			<Input
-				classNames={{
-					inputWrapper: "h-[48px] border-[#49464D] bg-[#18141D]",
-					input: "f600 text-[15px] text-white placeholder:text-[#49464D]",
-				}}
-				label={
-					<div className="flex items-center gap-2">
-						<span>提前买入</span>
-						<span className="text-[#5A575E]">(可选)</span>
-					</div>
-				}
-				endContent={
-					<div className="text-[15px] f6001 flex items-center gap-[4px]">
-						<MyAvatar
-							src="/images/common/bnb.png"
-							alt="BNB"
-							className="w-[24px] h-[24px]"
-						/>
-						BNB
-					</div>
-				}
-				inputMode="decimal"
-				pattern="[0-9]*[.,]?[0-9]*"
-				labelPlacement="outside-top"
-				name="amount"
-				placeholder="0.00"
-				variant="bordered"
-				aria-label="提前买入金额"
-			/>
-
-			{/* 社交链接 */}
-			<Input
-				classNames={{
-					inputWrapper: "h-[48px] border-[#49464D] bg-[#18141D]",
-					input: "f600 text-[15px] text-white placeholder:text-[#49464D]",
-				}}
-				label={
-					<div className="flex items-center gap-2">
-						<span>网站</span>
-						<span className="text-[#5A575E]">(可选)</span>
-					</div>
-				}
-				labelPlacement="outside-top"
-				name="website"
-				placeholder="输入网站链接"
-				variant="bordered"
-				type="url"
-				aria-label="网站链接"
-			/>
-			<Input
-				classNames={{
-					inputWrapper: "h-[48px] border-[#49464D] bg-[#18141D]",
-					input: "f600 text-[15px] text-white placeholder:text-[#49464D]",
-				}}
-				label={
-					<div className="flex items-center gap-2">
-						<span>X</span>
-						<span className="text-[#5A575E]">(可选)</span>
-					</div>
-				}
-				labelPlacement="outside-top"
-				name="x"
-				placeholder="输入 X 链接"
-				variant="bordered"
-				type="url"
-				aria-label="X 链接"
-			/>
-			<Input
-				classNames={{
-					inputWrapper: "h-[48px] border-[#49464D] bg-[#18141D]",
-					input: "f600 text-[15px] text-white placeholder:text-[#49464D]",
-				}}
-				label={
-					<div className="flex items-center gap-2">
-						<span>Telegram</span>
-						<span className="text-[#5A575E]">(可选)</span>
-					</div>
-				}
-				labelPlacement="outside-top"
-				name="telegram"
-				placeholder="输入 Telegram 链接"
-				variant="bordered"
-				type="url"
-				aria-label="Telegram 链接"
-			/>
-
-			<Button
-				className="w-full h-[48px] bg-[#231F28] text-[#8D8B90] text-[15px] mb-[50px]"
-				type="submit"
-				aria-label="提交创建代币"
+			</Form>
+			<ResponsiveDialog
+				isOpen={isOpen}
+				onOpenChange={onOpenChange}
+				title="创建成功"
+				maxVH={70}
+				size="md"
+				classNames={{ body: "text-[#fff]" }}
 			>
-				创建代币
-			</Button>
-
-			{submitted && (
-				<div className="text-small text-default-500 w-full break-words mb-[50px]">
-					You submitted: <code>{JSON.stringify(submitted)}</code>
+				<div className="flex flex-col items-center pt-[20px]">
+					<Image
+						isBlurred
+						alt="HeroUI Album Cover"
+						radius="full"
+						classNames={{
+							wrapper: "w-[80px] h-[80px] rounded-full",
+							img: "w-[80px] h-[80px] object-cover rounded-full",
+						}}
+						src={"https://heroui.com/images/fruit-1.jpeg"}
+					/>
+					<div className="text-[17px] f600 mt-[12px]">BOZ</div>
+					<div className="text-[13px] text-[#67646B] mt-[4px]">FuzzCoin</div>
+					<Snippet
+						classNames={{
+							base: "h-[28px] px-2 py-0 gap-0 rounded-full mt-[8px]",
+							content: "gap-0 px-0 grow-0 items-center",
+							pre: "m-0 p-0 leading-[28px] flex items-center f500",
+							symbol: "hidden",
+							copyButton: "w-[20px] h-[20px] min-w-0 p-0 inline-flex items-center justify-center",
+							copyIcon: "w-[12px] h-[12px]",
+							checkIcon: "w-[12px] h-[12px]", // No change
+						}}
+						size="sm"
+						checkIcon={<CheckIcon />} // No change
+						copyIcon={<CopyIcon />} // No change
+						symbol={undefined}
+						className="text-[11px] text-[#8D8B90] ">
+						<span className="f5001">0x1234...5678</span>
+					</Snippet>
+					<Button fullWidth className="f500 text-[15px] text-[#fff] bg-[#231F28] h-[48px] mt-[32px]">查看详情</Button>
+					<Button fullWidth className="f500 text-[15px] text-[#fff] bg-[#FD7438] h-[48px] mt-[12px]">分享到 X</Button>
 				</div>
-			)}
-		</Form>
+			</ResponsiveDialog>
+		</>
 	);
 }
 
@@ -544,3 +601,44 @@ const DeleteIcon = (props: any) => (
 		<path d="M2 4.4H14M12.6667 4.4V12.8C12.6667 13.4 12 14 11.3333 14H4.66667C4 14 3.33333 13.4 3.33333 12.8V4.4M5.33333 4.4V3.2C5.33333 2.6 6 2 6.66667 2H9.33333C10 2 10.6667 2.6 10.6667 3.2V4.4M6.66667 7.4V11M9.33333 7.4V11" stroke="#46434B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
 	</svg>
 )
+
+type IconProps = {
+	size?: number;
+	height?: number;
+	width?: number;
+	[x: string]: any;
+};
+
+export const CopyIcon = ({ size, height, width, ...props }: IconProps) => {
+	return (
+		<svg
+			fill="none"
+			height={size || height || 12}
+			shapeRendering="geometricPrecision"
+			stroke="currentColor"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			strokeWidth="1.5"
+			viewBox="0 0 24 24"
+			width={size || width || 12}
+			{...props}
+		>
+			<path d="M6 17C4.89543 17 4 16.1046 4 15V5C4 3.89543 4.89543 3 6 3H13C13.7403 3 14.3866 3.4022 14.7324 4M11 21H18C19.1046 21 20 20.1046 20 19V9C20 7.89543 19.1046 7 18 7H11C9.89543 7 9 7.89543 9 9V19C9 20.1046 9.89543 21 11 21Z" />
+		</svg>
+	);
+};
+
+export const CheckIcon = ({ size, height, width, ...props }: IconProps) => {
+	return (
+		<svg
+			fill="currentColor"
+			height={size || height || 12}
+			viewBox="0 0 24 24"
+			width={size || width || 12}
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
+			<path d="m2.394 13.742 4.743 3.62 7.616-8.704-1.506-1.316-6.384 7.296-3.257-2.486zm19.359-5.084-1.506-1.316-6.369 7.279-.753-.602-1.25 1.562 2.247 1.798z" />
+		</svg>
+	);
+};

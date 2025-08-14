@@ -60,10 +60,15 @@ const MemeTop = () => {
 					}}
 				></div>
 				<div className="absolute w-full h-full left-0 top-0 px-[12px] text-[12px] text-[rgba(255,255,255,0.35)] flex justify-between">
-					<div className="flex flex-col justify-center h-full">
-						市值进度<span className="text-[20px] f6001 text-[#fff]">{width}%</span>
-					</div>
-					<div className="text-[14px] f5001 flex items-end pb-[4px]"><span className="f6001 text-[#fff]">$62.5k</span> / $100k</div>
+					{
+						width < 100 ? <>
+							<div className="flex flex-col justify-center h-full">
+								市值进度<span className="text-[20px] f6001 text-[#fff]">{width}%</span>
+							</div>
+							<div className="text-[14px] f5001 flex items-end pb-[4px]"><span className="f6001 text-[#fff]">$62.5k</span> / $100k</div>
+						</> : <div className="flex items-center justify-center w-full text-[15px] text-[#17C964]">已发射到外盘</div>
+					}
+
 				</div>
 			</div>
 

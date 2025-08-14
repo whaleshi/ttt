@@ -10,6 +10,7 @@ import QueryProvider from '@/providers/QueryProvider'
 import PrivyProviders from '@/providers/PrivyProvider'
 import { BalanceProvider } from '@/providers/BalanceProvider'
 import { EchoProvider } from '@/providers/EchoProvider';
+import { Toaster } from 'sonner';
 
 import { config } from '../wagmiConfig'
 
@@ -42,6 +43,7 @@ const App = ({ Component, pageProps }: AppPropsWithLayout) => {
             <BalanceProvider>
               <EchoProvider>
                 <HeroUIProvider>
+                  <Toaster richColors position="top-center" />
                   {getLayout(<Component {...pageProps} />)}
                 </HeroUIProvider>
               </EchoProvider>

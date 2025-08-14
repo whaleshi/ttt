@@ -19,16 +19,10 @@ const Meme = () => {
 				<BackIcon className="cursor-pointer" onClick={() => router.push('/')} />
 				<ShareIcon className="cursor-pointer" />
 			</div>
-			{
-				addr == '0' ? <>
-					<After />
-				</> : <>
-					<MemeTop />
-					<Chart />
-					<About />
-					<Trade />
-				</>
-			}
+			<MemeTop />
+			<Chart />
+			<About />
+			<Trade />
 		</div>
 	);
 };

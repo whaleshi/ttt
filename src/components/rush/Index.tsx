@@ -1,28 +1,82 @@
-import React, { useState } from "react";
-import router, { useRouter } from 'next/router';
+import React from "react";
+import { useRouter } from 'next/router';
 import { Tab, Tabs } from "@heroui/react";
 
 import Game from "./Game";
+import List from "./List";
+import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
 
 const Rush = () => {
 	const router = useRouter();
-	const addr = (router.query.address || '') as string;
-	console.log(addr)
+	const { copyToClipboard } = useCopyToClipboard();
 
+	// 受控 Tab，和 URL ?tab=game|list 同步
+	const [activeTab, setActiveTab] = React.useState<'game' | 'list'>('game');
+
+	// 初始化：从 URL 读 tab
+	React.useEffect(() => {
+		if (!router.isReady) return;
+		const q = (router.query.tab as string) || '';
+		if (q === 'game' || q === 'list') {
+			setActiveTab(q);
+		}
+	}, [router.isReady, router.query.tab]);
+
+	const handleTabChange = React.useCallback((key: React.Key) => {
+		const nextKey = (key as string) === 'list' ? 'list' : 'game';
+		setActiveTab(nextKey);
+		// 同步到 URL（浅路由避免刷新数据）
+		router.push(
+			{ pathname: router.pathname, query: { ...router.query, tab: nextKey } },
+			undefined,
+			{ shallow: true }
+		);
+	}, [router]);
+
+	const handleBack = React.useCallback(() => {
+		router.push('/');
+	}, [router]);
+
+	const handleShare = React.useCallback(async () => {
+		const url = typeof window !== 'undefined' ? window.location.href : router.asPath;
+		// 优先使用 Web Share API
+		if (typeof navigator !== 'undefined' && (navigator as any).share) {
+			try {
+				await (navigator as any).share({
+					title: 'Meme Rush',
+					text: '一起参与 Meme Rush',
+					url,
+				});
+				return;
+			} catch (e) {
+				// 用户取消或失败则走复制
+			}
+		}
+		await copyToClipboard(url);
+	}, [copyToClipboard, router.asPath]);
 
 	return (
-		<div className="w-full max-w-[450px]">
-			<div className="h-[48px] flex items-center justify-between px-[16px] relative">
-				<BackIcon className="cursor-pointer relative z-10" onClick={() => router.push('/')} />
-				<ShareIcon className="cursor-pointer relative z-10" />
+		<div className="w-full max-w-[450px] mx-auto flex flex-col">
+			<div className="h-[48px] flex items-center justify-between px-[16px] relative flex-shrink-0 bg-[#100c15] z-10">
+				<BackIcon aria-label="返回" className="cursor-pointer relative z-10" onClick={handleBack} />
+				<ShareIcon aria-label="分享" className="cursor-pointer relative z-10" onClick={handleShare} />
 				<div className="w-full h-full flex items-center justify-center absolute top-0 left-0 text-[16px] text-[#fff] gap-[2px]"><span className="f5001">Meme Rush</span></div>
 			</div>
-			<div className="w-full px-[16px] f500 pt-[8px]">
-				<Tabs aria-label="Tabs variants" variant='solid' fullWidth size="lg">
+			<div className="w-full px-[16px] f500 pt-[8px] pb-[8px] flex-shrink-0 bg-[#100c15] z-10">
+				<Tabs
+					aria-label="选择区域"
+					variant='solid'
+					fullWidth
+					size="lg"
+					selectedKey={activeTab}
+					onSelectionChange={handleTabChange}
+				>
 					<Tab key="game" title="实时游戏" />
 					<Tab key="list" title="全部创意" />
 				</Tabs>
-				<Game />
+			</div>
+			<div className="px-[16px] bg-[#100c15]">
+				{activeTab === 'game' ? <Game /> : <List />}
 			</div>
 		</div>
 	);

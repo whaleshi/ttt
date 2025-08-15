@@ -1,5 +1,5 @@
 const LoadingIcon = () => (
-	<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+	<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
 		<rect width="80" height="80" fill="#1C1821" />
 		<circle cx="40" cy="40" r="40" fill="#1C1821" />
 		<g filter="url(#filter0_i_77_570)">
@@ -57,7 +57,7 @@ export interface AvatarProps extends BaseAvatarProps {
 	borderRadius?: string | number;
 }
 
-const MyAvatar = forwardRef<HTMLSpanElement, AvatarProps>((props, ref) => {
+const MyAvatarInner = forwardRef<HTMLSpanElement, AvatarProps>((props, ref) => {
 	const { shape, borderRadius, radius: radiusProp, ...rest } = props;
 	// 将自定义 shape 映射为 HeroUI 的 radius 取值
 	const mappedRadius: BaseAvatarProps["radius"] | undefined = (() => {
@@ -88,7 +88,8 @@ const MyAvatar = forwardRef<HTMLSpanElement, AvatarProps>((props, ref) => {
 		...rest,
 	});
 
-	const [isLoading, setIsLoading] = useState(!!src);
+	// 统一 SSR 与首次客户端渲染：若有 src，初始一律认为 loading，避免水合不匹配
+	const [isLoading, setIsLoading] = useState<boolean>(!!src);
 	const [isError, setIsError] = useState(false);
 
 	// 处理图片加载、错误状态
@@ -102,21 +103,26 @@ const MyAvatar = forwardRef<HTMLSpanElement, AvatarProps>((props, ref) => {
 		setIsError(true);
 	}, []);
 
+	// 仅当 src 变化时重置内部状态，避免无关重渲染引发短暂 fallback
 	useEffect(() => {
-		if (src) {
-			const img = new Image();
-			img.src = src;
-			if (img.complete) {
-				setIsLoading(false);
-				setIsError(false);
-			} else {
-				setIsLoading(true);
-				setIsError(false);
-			}
-		} else {
+		let active = true;
+		if (!src) {
 			setIsLoading(false);
 			setIsError(false);
+			return;
 		}
+		const img = new Image();
+		img.src = src;
+		if (img.complete) {
+			active && setIsLoading(false);
+			active && setIsError(false);
+		} else {
+			active && setIsLoading(true);
+			active && setIsError(false);
+			img.onload = () => { active && setIsLoading(false); };
+			img.onerror = () => { active && setIsError(true); };
+		}
+		return () => { active = false; };
 	}, [src]);
 
 	const Wrapper = ({ children }: { children: ReactNode }) => (
@@ -201,6 +207,8 @@ const MyAvatar = forwardRef<HTMLSpanElement, AvatarProps>((props, ref) => {
 		...(borderRadius !== undefined
 			? { borderRadius: typeof borderRadius === "number" ? `${borderRadius}px` : borderRadius, overflow: "hidden" as const }
 			: { overflow: "hidden" as const }),
+		willChange: 'transform',
+		contain: 'paint layout style',
 	} as React.CSSProperties;
 	const mergedImgStyle = {
 		...(imageProps as any).style,
@@ -210,7 +218,7 @@ const MyAvatar = forwardRef<HTMLSpanElement, AvatarProps>((props, ref) => {
 	} as React.CSSProperties;
 
 	return (
-		<div {...containerProps} style={mergedContainerStyle}>
+		<div {...containerProps} style={mergedContainerStyle} suppressHydrationWarning>
 			{src && !isError && (
 				<img
 					{...imageProps}
@@ -225,7 +233,18 @@ const MyAvatar = forwardRef<HTMLSpanElement, AvatarProps>((props, ref) => {
 	);
 });
 
-MyAvatar.displayName = "MyAvatar";
+MyAvatarInner.displayName = "MyAvatar";
 
-export default MyAvatar;
+// 避免无关状态变更导致头像重渲染
+const areEqual = (prev: AvatarProps, next: AvatarProps) => {
+	return (
+		prev.src === next.src &&
+		prev.alt === next.alt &&
+		prev.shape === next.shape &&
+		prev.borderRadius === next.borderRadius &&
+		prev.className === next.className
+	);
+};
+
+export default React.memo(MyAvatarInner, areEqual);
 

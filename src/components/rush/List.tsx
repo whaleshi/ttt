@@ -4,6 +4,7 @@ import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
 import RollingNumber from '@/components/common/RollingNumber';
 import MyAvatar from '@/components/common/AvatarImage';
 import RankBadge from '@/components/common/RankBadge';
+import HeartLike from '@/components/common/HeartLike';
 
 type Item = {
 	id: string;
@@ -188,11 +189,12 @@ const List: React.FC = () => {
 												color: isLiked ? '#FD7438' : '#FFFFFF',
 											}}
 										>
-											<HeartIcon filled={isLiked} color={isLiked ? '#FD7438' : '#FFFFFF'} />
+											{/* 心形爆炸特效（受控） */}
+											<HeartLike checked={isLiked} color="#FD7438" uncheckedContent={<HandIcon />} checkedContent={<HandIcon1 />} />
 											<RollingNumber
 												value={item.likeCount ?? 0}
 												prevValue={(item.likeCount ?? 0) + (isLiked ? -1 : 1)}
-												className="text-[14px] f600"
+												className="text-[14px] f6001"
 											/>
 										</button>
 									</div>
@@ -238,11 +240,12 @@ const List: React.FC = () => {
 												color: isLiked ? '#FD7438' : '#FFFFFF',
 											}}
 										>
-											<HeartIcon filled={isLiked} color={isLiked ? '#FD7438' : '#FFFFFF'} />
+											{/* 心形爆炸特效（受控） */}
+											<HeartLike checked={isLiked} color="#FD7438" uncheckedContent={<HandIcon />} checkedContent={<HandIcon1 />} />
 											<RollingNumber
 												value={item.likeCount ?? 0}
 												prevValue={(item.likeCount ?? 0) + (isLiked ? -1 : 1)}
-												className="text-[14px] f600"
+												className="text-[14px] f6001"
 											/>
 										</button>
 									</div>
@@ -301,14 +304,13 @@ const ShareIcon = (props: React.SVGProps<SVGSVGElement>) => (
 	</svg>
 );
 
-const HeartIcon: React.FC<{ filled?: boolean; color?: string }> = ({ filled = false, color = '#FFFFFF' }) => (
-	<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
-		<path
-			d="M12.1 21.35l-1.1-.99C5.14 15.24 2 12.39 2 8.99 2 6.24 4.24 4 7 4c1.54 0 3.04.73 4 1.87C12.96 4.73 14.46 4 16 4c2.76 0 5 2.24 5 4.99 0 3.4-3.14 6.25-8.9 11.37l-1 .99z"
-			fill={filled ? color : 'none'}
-			stroke={color}
-			strokeWidth="1.5"
-			strokeLinejoin="round"
-		/>
+const HandIcon = () => (
+	<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+		<path d="M9.52176 1.94532C9.3236 1.72428 9.03302 1.6001 8.71393 1.6001C8.36888 1.6001 8.01959 1.71166 7.72033 1.91756C7.42106 2.12345 7.18857 2.41212 7.05895 2.73873L6.09776 5.16141C6.00058 5.40643 5.82621 5.623 5.60174 5.77748C5.37726 5.93195 4.88053 6.01569 4.62168 6.01568H3.51996C2.91149 6.01568 2.35754 6.5041 2.28268 7.10659L1.61133 12.5092C1.5115 13.3125 2.08826 13.9637 2.89955 13.9637H3.63403H10.0411C10.43 13.9637 10.8239 13.8408 11.164 13.613C11.5041 13.3851 11.7722 13.0647 11.9283 12.6994L13.8141 8.28382C13.9265 8.02016 13.9767 7.74194 13.9609 7.47131C13.9451 7.20067 13.8636 6.94508 13.7229 6.72485C13.5823 6.50463 13.3864 6.32585 13.1507 6.20274C12.9151 6.07963 12.6462 6.01557 12.3656 6.01568H9.9693C9.80992 6.01568 9.66476 5.95365 9.56578 5.84324C9.4668 5.73283 9.4221 5.58308 9.4415 5.42693L9.77057 2.77877C9.80942 2.46616 9.71992 2.16636 9.52176 1.94532Z" fill="white" />
 	</svg>
-);
+)
+const HandIcon1 = () => (
+	<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+		<path d="M9.52176 1.94532C9.3236 1.72428 9.03302 1.6001 8.71393 1.6001C8.36888 1.6001 8.01959 1.71166 7.72033 1.91756C7.42106 2.12345 7.18857 2.41212 7.05895 2.73873L6.09776 5.16141C6.00058 5.40643 5.82621 5.623 5.60174 5.77748C5.37726 5.93195 4.88053 6.01569 4.62168 6.01568H3.51996C2.91149 6.01568 2.35754 6.5041 2.28268 7.10659L1.61133 12.5092C1.5115 13.3125 2.08826 13.9637 2.89955 13.9637H3.63403H10.0411C10.43 13.9637 10.8239 13.8408 11.164 13.613C11.5041 13.3851 11.7722 13.0647 11.9283 12.6994L13.8141 8.28382C13.9265 8.02016 13.9767 7.74194 13.9609 7.47131C13.9451 7.20067 13.8636 6.94508 13.7229 6.72485C13.5823 6.50463 13.3864 6.32585 13.1507 6.20274C12.9151 6.07963 12.6462 6.01557 12.3656 6.01568H9.9693C9.80992 6.01568 9.66476 5.95365 9.56578 5.84324C9.4668 5.73283 9.4221 5.58308 9.4415 5.42693L9.77057 2.77877C9.80942 2.46616 9.71992 2.16636 9.52176 1.94532Z" fill="#FD7438" />
+	</svg>
+)

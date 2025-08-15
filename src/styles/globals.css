@@ -141,3 +141,150 @@ body {
 .animate-shimmer {
     animation: shimmer 2s infinite;
 }
+
+/* === Heart like explode animation (from Ana Tudor's CodePen, adapted) === */
+.heart-like {
+    position: relative;
+    line-height: 1;
+}
+.heart-like__toggle {
+    position: absolute;
+    left: -100vw;
+}
+
+/* 使用变量自定义颜色，默认回落 #e2264d；我们在组件里传入品牌橙 */
+.heart-like__toggle:checked + .heart-like__label {
+    color: var(--heart-like-color, #e2264d);
+    filter: none;
+    will-change: font-size;
+    -webkit-animation: heart 1s cubic-bezier(0.17, 0.89, 0.32, 1.49);
+    animation: heart 1s cubic-bezier(0.17, 0.89, 0.32, 1.49);
+}
+.heart-like__toggle:not(:checked) + .heart-like__label {
+    color: rgba(255, 255, 255, 0.9); /* 未点赞时显示空心，颜色略浅 */
+}
+.heart-like__toggle:checked + .heart-like__label:before,
+.heart-like__toggle:checked + .heart-like__label:after {
+    -webkit-animation: inherit;
+    animation: inherit;
+    -webkit-animation-timing-function: ease-out;
+    animation-timing-function: ease-out;
+}
+
+.heart-like__label {
+    position: relative;
+    z-index: 1; /* 文本在气泡/火花之上 */
+    font-size: 1rem; /* 16px，更贴合按钮高度 */
+    user-select: none;
+}
+.heart-like__label:before,
+.heart-like__label:after {
+    position: absolute;
+    z-index: 0; /* 在文本下、按钮背景上 */
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    content: "";
+}
+.heart-like__label:before {
+    box-sizing: border-box;
+    margin: -2.25rem;
+    border: solid 2.25rem var(--heart-like-color, #e2264d);
+    width: 4.5rem;
+    height: 4.5rem;
+    transform: scale(0);
+}
+.heart-like__label:after {
+    margin: -0.1875rem;
+    width: 0.375rem;
+    height: 0.375rem;
+    /* 由于阴影列表很长，保留原实现以获得爆炸火花效果 */
+    box-shadow: 0.32476rem -3rem 0 -0.1875rem #ff8080, -0.32476rem -3rem 0 -0.1875rem #ffed80,
+        2.1082rem -1.73415rem 0 -0.1875rem #ffed80, 1.41004rem -2.00815rem 0 -0.1875rem #a4ff80,
+        2.30412rem 0.39099rem 0 -0.1875rem #a4ff80, 2.08305rem -0.32569rem 0 -0.1875rem #80ffc8,
+        0.76499rem 1.86898rem 0 -0.1875rem #80ffc8, 1.18748rem 1.24931rem 0 -0.1875rem #80c8ff,
+        -1.35019rem 1.5868rem 0 -0.1875rem #80c8ff, -0.60229rem 1.53084rem 0 -0.1875rem #a480ff,
+        -2.44865rem -0.24222rem 0 -0.1875rem #a480ff, -1.93852rem 0.30757rem 0 -0.1875rem #ff80ed,
+        -1.70323rem -2.24266rem 0 -0.1875rem #ff80ed, -1.81501rem -1.50104rem 0 -0.1875rem #ff8080;
+}
+
+@-webkit-keyframes heart {
+    0%,
+    17.5% {
+        font-size: 0;
+    }
+}
+@keyframes heart {
+    0%,
+    17.5% {
+        font-size: 0;
+    }
+}
+
+@-webkit-keyframes bubble {
+    15% {
+        transform: scale(1);
+        border-color: #cc8ef5;
+        border-width: 2.25rem;
+    }
+    30%,
+    100% {
+        transform: scale(1);
+        border-color: #cc8ef5;
+        border-width: 0;
+    }
+}
+@keyframes bubble {
+    15% {
+        transform: scale(1);
+        border-color: #cc8ef5;
+        border-width: 2.25rem;
+    }
+    30%,
+    100% {
+        transform: scale(1);
+        border-color: #cc8ef5;
+        border-width: 0;
+    }
+}
+
+@-webkit-keyframes sparkles {
+    0%,
+    20% {
+        opacity: 0;
+    }
+    25% {
+        opacity: 1;
+        box-shadow: 0.32476rem -2.4375rem 0 0rem #ff8080, -0.32476rem -2.0625rem 0 0rem #ffed80,
+            2.1082rem -1.26585rem 0 0rem #ffed80, 1.41004rem -1.53985rem 0 0rem #a4ff80, 2.30412rem 0.85901rem 0 0rem #a4ff80,
+            2.08305rem 0.14233rem 0 0rem #80ffc8, 0.76499rem 2.33702rem 0 0rem #80ffc8, 1.18748rem 1.71734rem 0 0rem #80c8ff,
+            -1.35019rem 2.0552rem 0 0rem #80c8ff, -0.60229rem 1.99916rem 0 0rem #a480ff, -2.44865rem 0.22578rem 0 0rem #a480ff,
+            -1.93852rem 0.77557rem 0 0rem #ff80ed, -1.70323rem -1.77366rem 0 0rem #ff80ed, -1.81501rem -1.03204rem 0 0rem #ff8080;
+    }
+}
+@keyframes sparkles {
+    0%,
+    20% {
+        opacity: 0;
+    }
+    25% {
+        opacity: 1;
+        box-shadow: 0.32476rem -2.4375rem 0 0rem #ff8080, -0.32476rem -2.0625rem 0 0rem #ffed80,
+            2.1082rem -1.26585rem 0 0rem #ffed80, 1.41004rem -1.53985rem 0 0rem #a4ff80, 2.30412rem 0.85901rem 0 0rem #a4ff80,
+            2.08305rem 0.14233rem 0 0rem #80ffc8, 0.76499rem 2.33702rem 0 0rem #80ffc8, 1.18748rem 1.71734rem 0 0rem #80c8ff,
+            -1.35019rem 2.0552rem 0 0rem #80c8ff, -0.60229rem 1.99916rem 0 0rem #a480ff, -2.44865rem 0.22578rem 0 0rem #a480ff,
+            -1.93852rem 0.77557rem 0 0rem #ff80ed, -1.70323rem -1.77366rem 0 0rem #ff80ed, -1.81501rem -1.03204rem 0 0rem #ff8080;
+    }
+}
+
+/* 连接动画名和伪元素 */
+.heart-like__toggle:checked + .heart-like__label:before {
+    will-change: transform, border-width, border-color;
+    -webkit-animation-name: bubble;
+    animation-name: bubble;
+}
+.heart-like__toggle:checked + .heart-like__label:after {
+    will-change: opacity, box-shadow;
+    -webkit-animation-name: sparkles;
+    animation-name: sparkles;
+}

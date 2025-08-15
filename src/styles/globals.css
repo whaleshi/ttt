@@ -224,26 +224,26 @@ body {
 @-webkit-keyframes bubble {
     15% {
         transform: scale(1);
-        border-color: #cc8ef5;
+        border-color: #fd7438;
         border-width: 2.25rem;
     }
     30%,
     100% {
         transform: scale(1);
-        border-color: #cc8ef5;
+        border-color: #fd7438;
         border-width: 0;
     }
 }
 @keyframes bubble {
     15% {
         transform: scale(1);
-        border-color: #cc8ef5;
+        border-color: #fd7438;
         border-width: 2.25rem;
     }
     30%,
     100% {
         transform: scale(1);
-        border-color: #cc8ef5;
+        border-color: #fd7438;
         border-width: 0;
     }
 }

@@ -32,15 +32,13 @@ const App = ({ Component, pageProps }: AppPropsWithLayout) => {
 
   // 首次加载全屏 Loading（仅在本次会话第一次进入时显示）
   // SSR 阶段不渲染遮罩，避免影响服务端抓取
-  const [showLoader, setShowLoader] = useState(() => {
-    if (typeof window === 'undefined') return false; // SSR: 不显示
-    try { return sessionStorage.getItem('appLoaded') === '1' ? false : true; } catch { return true; }
-  });
+  // 为避免 Hydration 不一致：SSR 与客户端初始渲染都显示遮罩，挂载后再根据会话状态隐藏
+  const [showLoader, setShowLoader] = useState(true);
   const [hiding, setHiding] = useState(false);
   useEffect(() => {
-    // 已经加载过则不再显示
+    // 已经加载过则不再显示；若 SSR 已显示，但客户端检测到已加载过，也立即隐藏
     if (typeof window !== 'undefined' && sessionStorage.getItem('appLoaded') === '1') {
-      setShowLoader(false);
+      if (showLoader) setShowLoader(false);
       return;
     }
 
@@ -85,6 +83,7 @@ const App = ({ Component, pageProps }: AppPropsWithLayout) => {
                   {getLayout(<Component {...pageProps} />)}
                   {showLoader && (
                     <div
+                      id="app-loader"
                       className={`fixed inset-0 z-[9999] flex items-center justify-center bg-[#07060A] transition-opacity duration-300 ${hiding ? 'opacity-0' : 'opacity-100'}`}
                     >
                       <div className="flex flex-col items-center gap-4">

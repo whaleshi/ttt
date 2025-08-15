@@ -23,6 +23,7 @@ const HomeBanner = () => {
 					splitType="chars"
 					from={{ opacity: 0, y: 40 }}
 					to={{ opacity: 1, y: 0 }}
+					exitY={-30}
 					threshold={0.1}
 					rootMargin="-100px"
 					textAlign="center"
